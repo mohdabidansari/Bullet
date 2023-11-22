@@ -31,37 +31,34 @@ class Bullet {
         return response;
       };
 
-      const handler = this.registeredRoutes[request.method + request.url];
-      if (!handler) {
-        try {
-          const m = request.url.substring(request.url.lastIndexOf(".") + 1);
-          // console.log(m);
-          // console.log(mime[m]);
-          if (!m || !mime[m]) {
-            throw new Error("Not a file");
-          }
-          return response.sendFile(`./public/${request.url}`, mime[m]);
-        } catch (error) {
-          return response
-            .status(400)
-            .end(`Cannot ${request.method} ${request.url}`);
-        }
-      }
-
       // this.registeredMiddlewares.forEach((middleware) => {
       //   middleware(request, response, () => {});
       // });
       // handler(request, response);
 
-      function runMiddleware(req, res, middleware, index) {
+      const runMiddleware = (req, res, middleware, index) => {
         if (index === middleware.length) {
+          const handler = this.registeredRoutes[request.method + request.url];
+          if (!handler) {
+            try {
+              const m = request.url.substring(request.url.lastIndexOf(".") + 1);
+              if (!m || !mime[m]) {
+                throw new Error("Not a file");
+              }
+              return response.sendFile(`./public/${request.url}`, mime[m]);
+            } catch (error) {
+              return response
+                .status(400)
+                .end(`Cannot ${request.method} ${request.url}`);
+            }
+          }
           handler(req, res);
         } else {
           middleware[index](req, res, () => {
             runMiddleware(req, res, middleware, ++index);
           });
         }
-      }
+      };
 
       runMiddleware(request, response, this.registeredMiddlewares, 0);
     });
