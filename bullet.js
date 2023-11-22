@@ -6,6 +6,7 @@ class Bullet {
   constructor() {
     this.server = http.createServer();
     this.registeredRoutes = {};
+    this.registeredMiddlewares = [];
 
     this.server.on("request", async (request, response) => {
       response.sendHTML = function (html) {
@@ -46,7 +47,23 @@ class Bullet {
             .end(`Cannot ${request.method} ${request.url}`);
         }
       }
-      handler(request, response);
+
+      // this.registeredMiddlewares.forEach((middleware) => {
+      //   middleware(request, response, () => {});
+      // });
+      // handler(request, response);
+
+      function runMiddleware(req, res, middleware, index) {
+        if (index === middleware.length) {
+          handler(req, res);
+        } else {
+          middleware[index](req, res, () => {
+            runMiddleware(req, res, middleware, ++index);
+          });
+        }
+      }
+
+      runMiddleware(request, response, this.registeredMiddlewares, 0);
     });
   }
 
@@ -56,6 +73,10 @@ class Bullet {
 
   route(method, url, cb) {
     this.registeredRoutes[method.toUpperCase() + url] = cb;
+  }
+
+  beforeEach(cb) {
+    this.registeredMiddlewares.push(cb);
   }
 }
 
