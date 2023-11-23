@@ -63,14 +63,58 @@ app.route("POST", "/api/login", (req, res) => {
 
 app.route("GET", "/api/user", (req, res) => {
   console.log(req.user);
-  res.json(req.user);
+  res.json({ name: req.user.name, username: req.user.username });
 });
 
-app.route("DELETE", "/api/logout", (req, res) => {});
+app.route("DELETE", "/api/logout", (req, res) => {
+  const idx = SESSIONS.findIndex((session) => session.userId !== req.user.id);
 
-app.route("PUT", "/api/user", (req, res) => {});
+  if (idx > -1) {
+    SESSIONS.splice(idx, 1);
+  }
 
-app.route("POST", "/api/posts", (req, res) => {});
+  res.setHeader(
+    "Set-Cookie",
+    `token=deleted; path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT`
+  );
+  res.json({
+    message: "Logged Out successfully",
+  });
+});
+
+app.route("PUT", "/api/user", (req, res) => {
+  const user = req.user;
+  const { name, passsword, username } = req.body;
+
+  user.name = name;
+  // user.passsword = passsword;
+  user.username = username;
+
+  if (passsword) {
+    user.passsword = passsword;
+  }
+
+  const idx = USERS.findIndex((u) => u.id === user.id);
+
+  USERS[idx] = user;
+
+  res.json({ name, username });
+});
+
+app.route("POST", "/api/posts", (req, res) => {
+  const { title, body } = req.body;
+
+  const post = {
+    id: Math.floor(Math.random() * 5),
+    title,
+    body,
+    userId: req.user.id,
+  };
+
+  POSTS.unshift(post);
+
+  res.status(201).json(post);
+});
 
 const PORT = 9000;
 app.listen(PORT, () => {

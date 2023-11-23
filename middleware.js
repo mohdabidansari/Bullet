@@ -1,3 +1,5 @@
+const { SESSIONS, USERS } = require("./poster/data");
+
 exports.bodyParser = (req, res, next) => {
   if (req.headers["content-type"] === "application/json") {
     let body = "";
@@ -32,7 +34,7 @@ exports.auth = (routesToAuth) => {
 
         if (session) {
           const user = USERS.find((user) => user.id === session.userId);
-          console.log({ user });
+          //   console.log({ user });
           req.user = user;
           next();
         } else {
